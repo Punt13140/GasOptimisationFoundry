@@ -104,17 +104,14 @@ contract GasContract is Ownable, Constants {
     event WhiteListTransfer(address indexed);
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
-        totalSupply = _totalSupply;
-
-        for (uint256 ii = 0; ii < administrators.length; ii++) {
-            if (_admins[ii] != address(0)) {
-                administrators[ii] = _admins[ii];
-                if (_admins[ii] == _owner) {
-                    balances[_owner] = totalSupply;
-                    emit supplyChanged(_admins[ii], totalSupply);
-                } 
-            }
+        require(_admins.length <= 5, "Exceeds maximum administrators allowed");
+        
+        for (uint256 ii = 0; ii < _admins.length; ii++) {
+            administrators[ii] = _admins[ii];
         }
+
+        totalSupply = _totalSupply;
+        balances[_owner] = totalSupply;
     }
 
     function getPaymentHistory()
@@ -126,13 +123,11 @@ contract GasContract is Ownable, Constants {
     }
 
     function checkForAdmin(address _user) public view returns (bool admin_) {
-        bool admin = false;
         for (uint256 ii = 0; ii < administrators.length; ii++) {
             if (administrators[ii] == _user) {
-                admin = true;
+                return true;
             }
         }
-        return admin;
     }
 
     function balanceOf(address _user) public view returns (uint256 balance_) {
