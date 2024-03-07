@@ -12,9 +12,7 @@ pragma solidity 0.8.0;
  * This contract is only required for intermediate, library-like contracts.
  */
 abstract contract Context {
-    function _msgSender() internal view virtual returns (address) {
-        return msg.sender;
-    }
+
 
     function _msgData() internal view virtual returns (bytes calldata) {
         return msg.data;
@@ -34,7 +32,7 @@ abstract contract Context {
  * the owner.
  */
 abstract contract Ownable is Context {
-    address private _owner;
+    address public _owner;
 
     event OwnershipTransferred(
         address indexed previousOwner,
@@ -45,7 +43,7 @@ abstract contract Ownable is Context {
      * @dev Initializes the contract setting the deployer as the initial owner.
      */
     constructor() {
-        _transferOwnership(_msgSender());
+        _transferOwnership(msg.sender);
     }
 
     /**
@@ -56,18 +54,13 @@ abstract contract Ownable is Context {
         _;
     }
 
-    /**
-     * @dev Returns the address of the current owner.
-     */
-    function owner() public view virtual returns (address) {
-        return _owner;
-    }
+
 
     /**
      * @dev Throws if the sender is not the owner.
      */
     function _checkOwner() internal view virtual {
-        require(owner() == _msgSender(), "Ownable: caller is not the owner");
+        require(_owner == msg.sender, "Ownable: caller is not the owner");
     }
 
     /**
