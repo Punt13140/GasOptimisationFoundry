@@ -39,7 +39,6 @@ contract GasContract is Ownable, Constants {
     }
 
     struct History {
-        uint256 lastUpdate;
         address updatedBy;
         uint256 blockNumber;
     }
@@ -94,10 +93,8 @@ contract GasContract is Ownable, Constants {
     event supplyChanged(address indexed, uint256 indexed);
     event Transfer(address recipient, uint256 amount);
     event PaymentUpdated(
-        address admin,
-        uint256 ID,
-        uint256 amount,
-        string recipient
+        address user,
+        uint256 ID
     );
     event WhiteListTransfer(address indexed);
 
@@ -129,16 +126,13 @@ contract GasContract is Ownable, Constants {
     }
 
 
-    function addHistory(address _updateAddress, bool _tradeMode)
+    function addHistory(address _updateAddress)
         public
-        returns (bool status_, bool tradeMode_)
     {
         History memory history;
         history.blockNumber = block.number;
-        history.lastUpdate = block.timestamp;
         history.updatedBy = _updateAddress;
         paymentHistory.push(history);
-        return (true, _tradeMode);
     }
 
     function getPayments(address _user)
@@ -203,12 +197,10 @@ contract GasContract is Ownable, Constants {
                 payments[_user][ii].admin = _user;
                 payments[_user][ii].paymentType = _type;
                 payments[_user][ii].amount = _amount;
-                addHistory(_user, getTradingMode());
+                addHistory(_user);
                 emit PaymentUpdated(
-                    msg.sender,
-                    _ID,
-                    _amount,
-                    payments[_user][ii].recipientName
+                    _user,
+                    _ID
                 );
                 return;
             }
