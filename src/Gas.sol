@@ -33,10 +33,10 @@ contract GasContract {
     //     address recipient;
     // }
 
-    struct History {
-        address updatedBy;
-        uint256 blockNumber;
-    }
+    // struct History {
+    //     address updatedBy;
+    //     uint256 blockNumber;
+    // }
 
     error Unauthorized();
     error ExceedsMaximumAdministratorsAllowed();
@@ -121,8 +121,6 @@ contract GasContract {
             revert RecipientNameTooLong();
         }
 
-        // bytes8 nameBytes = bytes8(bytes(_name));
-
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
         emit Transfer(_recipient, _amount);
@@ -130,6 +128,7 @@ contract GasContract {
         // payment.paymentType = PaymentType.BasicPayment;
         // payment.recipient = _recipient;
         // payment.amount = _amount;
+        // bytes8 nameBytes = bytes8(bytes(_name));
         // payment.recipientName = nameBytes;
         // payments[msg.sender].push(payment);
     }
@@ -159,7 +158,9 @@ contract GasContract {
             revert AmountTooSmall();
         }
 
-        whiteListStruct[msg.sender] = ImportantStruct(_amount, true);
+        whiteListStruct[msg.sender].amount = _amount;
+        whiteListStruct[msg.sender].paymentStatus = true;
+
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
         balances[msg.sender] += whitelist[msg.sender];
