@@ -12,6 +12,8 @@ contract GasContract is Ownable, Constants {
     mapping(address => uint256) public balances;
     mapping(address => Payment[]) public payments;
     mapping(address => uint256) public whitelist;
+    mapping(address => ImportantStruct) public whiteListStruct;
+
     address[5] public administrators;
     enum PaymentType {
         Unknown,
@@ -22,6 +24,11 @@ contract GasContract is Ownable, Constants {
     }
     PaymentType constant defaultPayment = PaymentType.Unknown;
     History[] public paymentHistory; // when a payment was updated
+
+    struct ImportantStruct {
+        uint256 amount;
+        bool paymentStatus;
+    }
 
     struct Payment {
         PaymentType paymentType;
@@ -39,18 +46,13 @@ contract GasContract is Ownable, Constants {
 
     error Unauthorized();
     error ExceedsMaximumAdministratorsAllowed();
-    error InsufficientBalance(uint256 available, uint256 required);
+    error InsufficientBalance();
     error RecipientNameTooLong();
-    error InvalidPaymentID();
-    error InvalidAmount();
-    error InvalidUser();
     error InvalidWhitelistTier();
     error NotWhitelisted();
 
     event AddedToWhitelist(address userAddress, uint256 tier);
-    event supplyChanged(address indexed, uint256 indexed);
     event Transfer(address recipient, uint256 amount);
-    event PaymentUpdated(address user, uint256 ID);
     event WhiteListTransfer(address indexed);
 
     modifier onlyAdminOrOwner() {
@@ -63,7 +65,7 @@ contract GasContract is Ownable, Constants {
 
     modifier hasEnoughBalance(uint256 _amount) {
         if (_amount > balances[msg.sender]) {
-            revert InsufficientBalance(balances[msg.sender], _amount);
+            revert InsufficientBalance();
         }
 
         _;
@@ -106,24 +108,18 @@ contract GasContract is Ownable, Constants {
         return true;
     }
 
-    function addHistory(address _updateAddress) public {
+    function addHistory(address _updateAddress) private {
         History memory history;
         history.blockNumber = block.number;
         history.updatedBy = _updateAddress;
         paymentHistory.push(history);
     }
 
-    function getPayments(
-        address _user
-    ) public view returns (Payment[] memory payments_) {
-        return payments[_user];
-    }
-
     function transfer(
         address _recipient,
         uint256 _amount,
         string calldata _name
-    ) public hasEnoughBalance(_amount) returns (bool status_) {
+    ) public hasEnoughBalance(_amount) {
         if (bytes(_name).length > 8) {
             revert RecipientNameTooLong();
         }
@@ -137,36 +133,6 @@ contract GasContract is Ownable, Constants {
         payment.amount = _amount;
         payment.recipientName = _name;
         payments[msg.sender].push(payment);
-        return true;
-    }
-
-    function updatePayment(
-        address _user,
-        uint256 _ID,
-        uint256 _amount,
-        PaymentType _type
-    ) public onlyAdminOrOwner {
-        if (_ID < 1) {
-            revert InvalidPaymentID();
-        }
-        if (_amount == 0) {
-            revert InvalidAmount();
-        }
-        if (_user == address(0)) {
-            revert InvalidUser();
-        }
-
-        for (uint256 ii = 0; ii < payments[_user].length; ii++) {
-            if (ii == _ID) {
-                payments[_user][ii].adminUpdated = true;
-                payments[_user][ii].admin = _user;
-                payments[_user][ii].paymentType = _type;
-                payments[_user][ii].amount = _amount;
-                addHistory(_user);
-                emit PaymentUpdated(_user, _ID);
-                return;
-            }
-        }
     }
 
     function addToWhitelist(
@@ -185,12 +151,6 @@ contract GasContract is Ownable, Constants {
 
         emit AddedToWhitelist(_userAddrs, _tier);
     }
-
-    struct ImportantStruct {
-        uint256 amount;
-        bool paymentStatus;
-    }
-    mapping(address => ImportantStruct) public whiteListStruct;
 
     function whiteTransfer(
         address _recipient,
