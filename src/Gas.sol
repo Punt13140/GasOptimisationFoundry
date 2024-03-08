@@ -9,7 +9,6 @@ contract Constants {
 }
 
 contract GasContract is Ownable, Constants {
-    uint256 public tradePercent = 12;
     mapping(address => uint256) public balances;
     mapping(address => Payment[]) public payments;
     mapping(address => uint256) public whitelist;
@@ -22,7 +21,6 @@ contract GasContract is Ownable, Constants {
         GroupPayment
     }
     PaymentType constant defaultPayment = PaymentType.Unknown;
-
     History[] public paymentHistory; // when a payment was updated
 
     struct Payment {
@@ -39,9 +37,22 @@ contract GasContract is Ownable, Constants {
         uint256 blockNumber;
     }
 
-    event AddedToWhitelist(address userAddress, uint256 tier);
-
     error Unauthorized();
+    error ExceedsMaximumAdministratorsAllowed();
+    error InsufficientBalance(uint256 available, uint256 required);
+    error RecipientNameTooLong();
+    error InvalidPaymentID();
+    error InvalidAmount();
+    error InvalidUser();
+    error InvalidWhitelistTier();
+    error NotWhitelisted();
+
+    event AddedToWhitelist(address userAddress, uint256 tier);
+    event supplyChanged(address indexed, uint256 indexed);
+    event Transfer(address recipient, uint256 amount);
+    event PaymentUpdated(address user, uint256 ID);
+    event WhiteListTransfer(address indexed);
+
     modifier onlyAdminOrOwner() {
         if (!checkForAdmin(msg.sender) || msg.sender != _owner) {
             revert Unauthorized();
@@ -50,13 +61,27 @@ contract GasContract is Ownable, Constants {
         _;
     }
 
-    event supplyChanged(address indexed, uint256 indexed);
-    event Transfer(address recipient, uint256 amount);
-    event PaymentUpdated(address user, uint256 ID);
-    event WhiteListTransfer(address indexed);
+    modifier hasEnoughBalance(uint256 _amount) {
+        if (_amount > balances[msg.sender]) {
+            revert InsufficientBalance(balances[msg.sender], _amount);
+        }
+
+        _;
+    }
+
+    modifier onlyWhitelisted(address sender) {
+        uint256 usersTier = whitelist[msg.sender];
+        if (usersTier > 0 && usersTier < 4) {
+            _;
+        } else {
+            revert NotWhitelisted();
+        }
+    }
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
-        require(_admins.length <= 5, "Exceeds maximum administrators allowed");
+        if (_admins.length > 5) {
+            revert ExceedsMaximumAdministratorsAllowed();
+        }
 
         for (uint256 ii = 0; ii < _admins.length; ii++) {
             administrators[ii] = _admins[ii];
@@ -94,17 +119,11 @@ contract GasContract is Ownable, Constants {
         return payments[_user];
     }
 
-    error InsufficientBalance(uint256 available, uint256 required);
-    error RecipientNameTooLong();
-
     function transfer(
         address _recipient,
         uint256 _amount,
         string calldata _name
-    ) public returns (bool status_) {
-        if (_amount > balances[msg.sender]) {
-            revert InsufficientBalance(balances[msg.sender], _amount);
-        }
+    ) public hasEnoughBalance(_amount) returns (bool status_) {
         if (bytes(_name).length > 8) {
             revert RecipientNameTooLong();
         }
@@ -121,10 +140,6 @@ contract GasContract is Ownable, Constants {
         return true;
     }
 
-    error InvalidPaymentID();
-    error InvalidAmount();
-    error InvalidUser();
-
     function updatePayment(
         address _user,
         uint256 _ID,
@@ -134,7 +149,7 @@ contract GasContract is Ownable, Constants {
         if (_ID < 1) {
             revert InvalidPaymentID();
         }
-        if (_amount < 1) {
+        if (_amount == 0) {
             revert InvalidAmount();
         }
         if (_user == address(0)) {
@@ -154,14 +169,12 @@ contract GasContract is Ownable, Constants {
         }
     }
 
-    error InvalidTier();
-
     function addToWhitelist(
         address _userAddrs,
         uint256 _tier
     ) public onlyAdminOrOwner {
         if (_tier > 254) {
-            revert InvalidTier();
+            revert InvalidWhitelistTier();
         }
 
         if (_tier < 3) {
@@ -173,16 +186,6 @@ contract GasContract is Ownable, Constants {
         emit AddedToWhitelist(_userAddrs, _tier);
     }
 
-    error NotWhitelisted();
-    modifier checkIfWhiteListed(address sender) {
-        uint256 usersTier = whitelist[msg.sender];
-        if (usersTier > 0 && usersTier < 4) {
-            _;
-        } else {
-            revert NotWhitelisted();
-        }
-    }
-
     struct ImportantStruct {
         uint256 amount;
         bool paymentStatus;
@@ -192,13 +195,8 @@ contract GasContract is Ownable, Constants {
     function whiteTransfer(
         address _recipient,
         uint256 _amount
-    ) public checkIfWhiteListed(msg.sender) {
+    ) public onlyWhitelisted(msg.sender) hasEnoughBalance(_amount) {
         whiteListStruct[msg.sender] = ImportantStruct(_amount, true);
-
-        require(
-            balances[msg.sender] >= _amount,
-            "Gas Contract - whiteTransfers function - Sender has insufficient Balance"
-        );
         require(
             _amount > 3,
             "Gas Contract - whiteTransfers function - amount to send have to be bigger than 3"
