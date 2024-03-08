@@ -211,6 +211,7 @@ contract GasContract is Ownable, Constants {
                     _amount,
                     payments[_user][ii].recipientName
                 );
+                return;
             }
         }
     }
