@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.0;
+pragma solidity ^0.8.4;
 
 import "./Ownable.sol";
 
@@ -149,25 +149,26 @@ contract GasContract is Ownable, Constants {
         return payments[_user];
     }
 
+
+    error InsufficientBalance(uint256 available, uint256 required);
+    error RecipientNameTooLong();
+
     function transfer(
         address _recipient,
         uint256 _amount,
         string calldata _name
     ) public returns (bool status_) {
-        require(
-            balances[msg.sender] >= _amount,
-            "Gas Contract - Transfer function - Sender has insufficient Balance"
-        );
-        require(
-            bytes(_name).length < 9,
-            "Gas Contract - Transfer function -  The recipient name is too long, there is a max length of 8 characters"
-        );
+        if(_amount > balances[msg.sender]) {
+            revert InsufficientBalance(balances[msg.sender], _amount);
+        }
+        if(bytes(_name).length > 8) {
+            revert RecipientNameTooLong();
+        }
+
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
         emit Transfer(_recipient, _amount);
         Payment memory payment;
-        payment.admin = address(0);
-        payment.adminUpdated = false;
         payment.paymentType = PaymentType.BasicPayment;
         payment.recipient = _recipient;
         payment.amount = _amount;
