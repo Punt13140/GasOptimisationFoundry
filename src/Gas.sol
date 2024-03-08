@@ -178,24 +178,24 @@ contract GasContract is Ownable, Constants {
         return true;
     }
 
+    error InvalidPaymentID();
+    error InvalidAmount();
+    error InvalidUser();
     function updatePayment(
         address _user,
         uint256 _ID,
         uint256 _amount,
         PaymentType _type
     ) public onlyAdminOrOwner {
-        require(
-            _ID > 0,
-            "Gas Contract - Update Payment function - ID must be greater than 0"
-        );
-        require(
-            _amount > 0,
-            "Gas Contract - Update Payment function - Amount must be greater than 0"
-        );
-        require(
-            _user != address(0),
-            "Gas Contract - Update Payment function - Administrator must have a valid non zero address"
-        );
+        if(_ID < 1) {
+            revert InvalidPaymentID();
+        }
+        if(_amount < 1) {
+            revert InvalidAmount();
+        }
+        if(_user == address(0)) {
+            revert InvalidUser();
+        }
 
         for (uint256 ii = 0; ii < payments[_user].length; ii++) {
             if (payments[_user][ii].paymentID == _ID) {
@@ -203,8 +203,7 @@ contract GasContract is Ownable, Constants {
                 payments[_user][ii].admin = _user;
                 payments[_user][ii].paymentType = _type;
                 payments[_user][ii].amount = _amount;
-                bool tradingMode = getTradingMode();
-                addHistory(_user, tradingMode);
+                addHistory(_user, getTradingMode());
                 emit PaymentUpdated(
                     msg.sender,
                     _ID,
