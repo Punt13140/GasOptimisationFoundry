@@ -1,18 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.4;
 
-import "./Ownable.sol";
-
-contract Constants {
-    bool public tradeFlag = true;
-    bool public dividendFlag = true;
-}
-
-contract GasContract is Ownable, Constants {
+contract GasContract {
     mapping(address => uint256) public balances;
     mapping(address => Payment[]) public payments;
     mapping(address => uint256) public whitelist;
     mapping(address => ImportantStruct) public whiteListStruct;
+    address internal _owner;
 
     address[5] public administrators;
     enum PaymentType {
@@ -31,12 +25,12 @@ contract GasContract is Ownable, Constants {
     }
 
     struct Payment {
+        uint256 amount;
+        address admin; // administrators address
         PaymentType paymentType;
         bool adminUpdated;
-        string recipientName; // max 8 characters
+        bytes8 recipientName; // max 8 characters
         address recipient;
-        address admin; // administrators address
-        uint256 amount;
     }
 
     struct History {
@@ -86,6 +80,8 @@ contract GasContract is Ownable, Constants {
             revert ExceedsMaximumAdministratorsAllowed();
         }
 
+        _owner = msg.sender;
+
         for (uint256 ii = 0; ii < _admins.length; ii++) {
             administrators[ii] = _admins[ii];
         }
@@ -125,6 +121,8 @@ contract GasContract is Ownable, Constants {
             revert RecipientNameTooLong();
         }
 
+        bytes8 nameBytes = bytes8(bytes(_name));
+
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
         emit Transfer(_recipient, _amount);
@@ -132,7 +130,8 @@ contract GasContract is Ownable, Constants {
         payment.paymentType = PaymentType.BasicPayment;
         payment.recipient = _recipient;
         payment.amount = _amount;
-        payment.recipientName = _name;
+        payment.recipientName = nameBytes;
+
         payments[msg.sender].push(payment);
     }
 
