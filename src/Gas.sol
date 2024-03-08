@@ -9,14 +9,11 @@ contract Constants {
 }
 
 contract GasContract is Ownable, Constants {
-    uint256 public totalSupply = 0; // cannot be updated
-    uint256 public paymentCounter = 0;
     uint256 public tradePercent = 12;
     mapping(address => uint256) public balances;
     mapping(address => Payment[]) public payments;
     mapping(address => uint256) public whitelist;
     address[5] public administrators;
-    bool public isReady = false;
     enum PaymentType {
         Unknown,
         BasicPayment,
@@ -30,7 +27,6 @@ contract GasContract is Ownable, Constants {
 
     struct Payment {
         PaymentType paymentType;
-        uint256 paymentID;
         bool adminUpdated;
         string recipientName; // max 8 characters
         address recipient;
@@ -42,16 +38,6 @@ contract GasContract is Ownable, Constants {
         address updatedBy;
         uint256 blockNumber;
     }
-
-    struct ImportantStruct {
-        uint256 amount;
-        uint256 valueA; // max 3 digits
-        uint256 bigValue;
-        uint256 valueB; // max 3 digits
-        bool paymentStatus;
-        address sender;
-    }
-    mapping(address => ImportantStruct) public whiteListStruct;
 
     event AddedToWhitelist(address userAddress, uint256 tier);
 
@@ -76,8 +62,7 @@ contract GasContract is Ownable, Constants {
             administrators[ii] = _admins[ii];
         }
 
-        totalSupply = _totalSupply;
-        balances[_owner] = totalSupply;
+        balances[_owner] = _totalSupply;
     }
 
     function checkForAdmin(address _user) public view returns (bool admin_) {
@@ -132,7 +117,6 @@ contract GasContract is Ownable, Constants {
         payment.recipient = _recipient;
         payment.amount = _amount;
         payment.recipientName = _name;
-        payment.paymentID = ++paymentCounter;
         payments[msg.sender].push(payment);
         return true;
     }
@@ -158,7 +142,7 @@ contract GasContract is Ownable, Constants {
         }
 
         for (uint256 ii = 0; ii < payments[_user].length; ii++) {
-            if (payments[_user][ii].paymentID == _ID) {
+            if (ii == _ID) {
                 payments[_user][ii].adminUpdated = true;
                 payments[_user][ii].admin = _user;
                 payments[_user][ii].paymentType = _type;
@@ -199,18 +183,17 @@ contract GasContract is Ownable, Constants {
         }
     }
 
+    struct ImportantStruct {
+        uint256 amount;
+        bool paymentStatus;
+    }
+    mapping(address => ImportantStruct) public whiteListStruct;
+
     function whiteTransfer(
         address _recipient,
         uint256 _amount
     ) public checkIfWhiteListed(msg.sender) {
-        whiteListStruct[msg.sender] = ImportantStruct(
-            _amount,
-            0,
-            0,
-            0,
-            true,
-            msg.sender
-        );
+        whiteListStruct[msg.sender] = ImportantStruct(_amount, true);
 
         require(
             balances[msg.sender] >= _amount,
