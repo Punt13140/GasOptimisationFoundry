@@ -50,6 +50,7 @@ contract GasContract is Ownable, Constants {
     error RecipientNameTooLong();
     error InvalidWhitelistTier();
     error NotWhitelisted();
+    error AmountTooSmall();
 
     event AddedToWhitelist(address userAddress, uint256 tier);
     event Transfer(address recipient, uint256 amount);
@@ -156,11 +157,11 @@ contract GasContract is Ownable, Constants {
         address _recipient,
         uint256 _amount
     ) public onlyWhitelisted(msg.sender) hasEnoughBalance(_amount) {
+        if (_amount < 4) {
+            revert AmountTooSmall();
+        }
+
         whiteListStruct[msg.sender] = ImportantStruct(_amount, true);
-        require(
-            _amount > 3,
-            "Gas Contract - whiteTransfers function - amount to send have to be bigger than 3"
-        );
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
         balances[msg.sender] += whitelist[msg.sender];
