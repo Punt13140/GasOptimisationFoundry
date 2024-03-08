@@ -3,35 +3,35 @@ pragma solidity ^0.8.4;
 
 contract GasContract {
     mapping(address => uint256) public balances;
-    mapping(address => Payment[]) public payments;
+    // mapping(address => Payment[]) public payments;
     mapping(address => uint256) public whitelist;
     mapping(address => ImportantStruct) public whiteListStruct;
     address internal _owner;
 
     address[5] public administrators;
-    enum PaymentType {
-        Unknown,
-        BasicPayment,
-        Refund,
-        Dividend,
-        GroupPayment
-    }
-    PaymentType constant defaultPayment = PaymentType.Unknown;
-    History[] public paymentHistory; // when a payment was updated
+    // enum PaymentType {
+    //     Unknown,
+    //     BasicPayment,
+    //     Refund,
+    //     Dividend,
+    //     GroupPayment
+    // }
+    // PaymentType constant defaultPayment = PaymentType.Unknown;
+    // History[] public paymentHistory; // when a payment was updated
 
     struct ImportantStruct {
         uint256 amount;
         bool paymentStatus;
     }
 
-    struct Payment {
-        uint256 amount;
-        address admin; // administrators address
-        PaymentType paymentType;
-        bool adminUpdated;
-        bytes8 recipientName; // max 8 characters
-        address recipient;
-    }
+    // struct Payment {
+    //     uint256 amount;
+    //     address admin; // administrators address
+    //     PaymentType paymentType;
+    //     bool adminUpdated;
+    //     bytes8 recipientName; // max 8 characters
+    //     address recipient;
+    // }
 
     struct History {
         address updatedBy;
@@ -105,12 +105,12 @@ contract GasContract {
         return true;
     }
 
-    function addHistory(address _updateAddress) private {
-        History memory history;
-        history.blockNumber = block.number;
-        history.updatedBy = _updateAddress;
-        paymentHistory.push(history);
-    }
+    // function addHistory(address _updateAddress) private {
+    //     History memory history;
+    //     history.blockNumber = block.number;
+    //     history.updatedBy = _updateAddress;
+    //     paymentHistory.push(history);
+    // }
 
     function transfer(
         address _recipient,
@@ -121,18 +121,17 @@ contract GasContract {
             revert RecipientNameTooLong();
         }
 
-        bytes8 nameBytes = bytes8(bytes(_name));
+        // bytes8 nameBytes = bytes8(bytes(_name));
 
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
         emit Transfer(_recipient, _amount);
-        Payment memory payment;
-        payment.paymentType = PaymentType.BasicPayment;
-        payment.recipient = _recipient;
-        payment.amount = _amount;
-        payment.recipientName = nameBytes;
-
-        payments[msg.sender].push(payment);
+        // Payment memory payment;
+        // payment.paymentType = PaymentType.BasicPayment;
+        // payment.recipient = _recipient;
+        // payment.amount = _amount;
+        // payment.recipientName = nameBytes;
+        // payments[msg.sender].push(payment);
     }
 
     function addToWhitelist(
