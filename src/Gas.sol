@@ -4,15 +4,10 @@ pragma solidity ^0.8.24;
 contract GasContract {
     mapping(address => uint256) public balances;
     mapping(address => uint256) public whitelist;
-    mapping(address => ImportantStruct) private whiteListStruct;
+    uint256 private lastSendAmount;
     address private immutable _owner;
 
     address[5] public administrators;
-
-    struct ImportantStruct {
-        uint256 amount;
-        bool paymentStatus;
-    }
 
     event AddedToWhitelist(address userAddress, uint256 tier);
     event WhiteListTransfer(address indexed);
@@ -66,8 +61,7 @@ contract GasContract {
             revert();
         }
 
-        whiteListStruct[msg.sender].amount = _amount;
-
+        lastSendAmount = _amount;
         balances[msg.sender] = balances[msg.sender] + usersTier - _amount;
         balances[_recipient] = balances[_recipient] + _amount - usersTier;
 
@@ -77,6 +71,6 @@ contract GasContract {
     function getPaymentStatus(
         address sender
     ) public view returns (bool, uint256) {
-        return (true, whiteListStruct[sender].amount);
+        return (true, lastSendAmount);
     }
 }
