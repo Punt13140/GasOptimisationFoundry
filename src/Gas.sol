@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.8;
 
 contract GasContract {
     mapping(address => uint256) public balances;
     // mapping(address => Payment[]) public payments;
     mapping(address => uint256) public whitelist;
     mapping(address => ImportantStruct) public whiteListStruct;
-    address internal _owner;
+    address private _owner;
 
     address[5] public administrators;
     // enum PaymentType {
@@ -50,14 +50,6 @@ contract GasContract {
     event Transfer(address recipient, uint256 amount);
     event WhiteListTransfer(address indexed);
 
-    modifier onlyAdminOrOwner() {
-        if (!checkForAdmin(msg.sender) || msg.sender != _owner) {
-            revert Unauthorized();
-        }
-
-        _;
-    }
-
     modifier hasEnoughBalance(uint256 _amount) {
         if (_amount > balances[msg.sender]) {
             revert InsufficientBalance();
@@ -66,27 +58,14 @@ contract GasContract {
         _;
     }
 
-    modifier onlyWhitelisted(address sender) {
-        uint256 usersTier = whitelist[msg.sender];
-        if (usersTier > 0 && usersTier < 4) {
-            _;
-        } else {
-            revert NotWhitelisted();
-        }
-    }
-
     constructor(address[] memory _admins, uint256 _totalSupply) {
-        uint256 adminsLength = _admins.length;
-        //Checking whith assembly save more gas
-        assembly {
-            if gt(adminsLength, 5) {
-                revert(0, 0)
-            }
+        if (_admins.length > 5) {
+            revert ExceedsMaximumAdministratorsAllowed();
         }
 
         _owner = msg.sender;
 
-        for (uint256 ii = 0; ii < _admins.length; ii++) {
+        for (uint256 ii; ii < _admins.length; ii++) {
             administrators[ii] = _admins[ii];
         }
 
@@ -94,7 +73,7 @@ contract GasContract {
     }
 
     function checkForAdmin(address _user) public view returns (bool admin_) {
-        for (uint256 ii = 0; ii < administrators.length; ii++) {
+        for (uint256 ii; ii < administrators.length; ii++) {
             if (administrators[ii] == _user) {
                 return true;
             }
@@ -137,19 +116,16 @@ contract GasContract {
         // payments[msg.sender].push(payment);
     }
 
-    function addToWhitelist(
-        address _userAddrs,
-        uint256 _tier
-    ) public onlyAdminOrOwner {
+    function addToWhitelist(address _userAddrs, uint256 _tier) public {
+        if (!checkForAdmin(msg.sender) || msg.sender != _owner) {
+            revert Unauthorized();
+        }
+
         if (_tier > 254) {
             revert InvalidWhitelistTier();
         }
 
-        if (_tier < 3) {
-            whitelist[_userAddrs] = _tier;
-        } else {
-            whitelist[_userAddrs] = 3;
-        }
+        whitelist[_userAddrs] = _tier < 3 ? _tier : 3;
 
         emit AddedToWhitelist(_userAddrs, _tier);
     }
@@ -157,7 +133,12 @@ contract GasContract {
     function whiteTransfer(
         address _recipient,
         uint256 _amount
-    ) public onlyWhitelisted(msg.sender) hasEnoughBalance(_amount) {
+    ) public hasEnoughBalance(_amount) {
+        uint256 usersTier = whitelist[msg.sender];
+        if (usersTier == 0 || usersTier > 4) {
+            revert NotWhitelisted();
+        }
+
         if (_amount < 4) {
             revert AmountTooSmall();
         }
