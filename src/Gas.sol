@@ -52,15 +52,11 @@ contract GasContract {
     }
 
     function whiteTransfer(address _recipient, uint256 _amount) public {
-        uint256 usersTier = whitelist[msg.sender];
-        if (usersTier == 0 || usersTier > 4) {
-            revert();
-        }
-
         if (_amount < 4) {
             revert();
         }
 
+        uint256 usersTier = whitelist[msg.sender];
         lastSendAmount = _amount;
         balances[msg.sender] = balances[msg.sender] + usersTier - _amount;
         balances[_recipient] = balances[_recipient] + _amount - usersTier;
