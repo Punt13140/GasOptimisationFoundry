@@ -40,10 +40,6 @@ contract GasContract {
         return balances[_user];
     }
 
-    function getTradingMode() public pure returns (bool mode_) {
-        return true;
-    }
-
     /// @dev tests does not check for balance requirements and does not need an event
     function transfer(
         address _recipient,
