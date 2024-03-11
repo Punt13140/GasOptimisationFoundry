@@ -70,12 +70,11 @@ contract GasContract {
         }
 
         whiteListStruct[msg.sender].amount = _amount;
-        whiteListStruct[msg.sender].paymentStatus = true;
 
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
-        balances[msg.sender] += whitelist[msg.sender];
-        balances[_recipient] -= whitelist[msg.sender];
+        balances[msg.sender] += usersTier;
+        balances[_recipient] -= usersTier;
 
         emit WhiteListTransfer(_recipient);
     }
