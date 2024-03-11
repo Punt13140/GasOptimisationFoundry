@@ -76,8 +76,12 @@ contract GasContract {
     }
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
-        if (_admins.length > 5) {
-            revert ExceedsMaximumAdministratorsAllowed();
+        uint256 adminsLength = _admins.length;
+        //Checking whith assembly save more gas
+        assembly {
+            if gt(adminsLength, 5) {
+                revert(0, 0)
+            }
         }
 
         _owner = msg.sender;
