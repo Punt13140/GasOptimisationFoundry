@@ -46,7 +46,7 @@ contract GasContract {
         if (msg.sender != _owner) revert();
         if (_tier > 254) revert();
 
-        whitelist[_userAddrs] = _tier < 3 ? _tier : 3;
+        whitelist[_userAddrs] = 3;
 
         emit AddedToWhitelist(_userAddrs, _tier);
     }
