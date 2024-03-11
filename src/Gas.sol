@@ -38,21 +38,13 @@ contract GasContract {
     //     uint256 blockNumber;
     // }
 
-    error Unauthorized();
-    error ExceedsMaximumAdministratorsAllowed();
-    error InsufficientBalance();
-    error RecipientNameTooLong();
-    error InvalidWhitelistTier();
-    error NotWhitelisted();
-    error AmountTooSmall();
-
     event AddedToWhitelist(address userAddress, uint256 tier);
     event Transfer(address recipient, uint256 amount);
     event WhiteListTransfer(address indexed);
 
     modifier hasEnoughBalance(uint256 _amount) {
         if (_amount > balances[msg.sender]) {
-            revert InsufficientBalance();
+            revert();
         }
 
         _;
@@ -60,7 +52,7 @@ contract GasContract {
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
         if (_admins.length > 5) {
-            revert ExceedsMaximumAdministratorsAllowed();
+            revert();
         }
 
         _owner = msg.sender;
@@ -101,7 +93,7 @@ contract GasContract {
         string calldata _name
     ) public hasEnoughBalance(_amount) {
         if (bytes(_name).length > 8) {
-            revert RecipientNameTooLong();
+            revert();
         }
 
         balances[msg.sender] -= _amount;
@@ -118,11 +110,11 @@ contract GasContract {
 
     function addToWhitelist(address _userAddrs, uint256 _tier) public {
         if (!checkForAdmin(msg.sender) || msg.sender != _owner) {
-            revert Unauthorized();
+            revert();
         }
 
         if (_tier > 254) {
-            revert InvalidWhitelistTier();
+            revert();
         }
 
         whitelist[_userAddrs] = _tier < 3 ? _tier : 3;
@@ -136,11 +128,11 @@ contract GasContract {
     ) public hasEnoughBalance(_amount) {
         uint256 usersTier = whitelist[msg.sender];
         if (usersTier == 0 || usersTier > 4) {
-            revert NotWhitelisted();
+            revert();
         }
 
         if (_amount < 4) {
-            revert AmountTooSmall();
+            revert();
         }
 
         whiteListStruct[msg.sender].amount = _amount;
