@@ -4,8 +4,8 @@ pragma solidity ^0.8.24;
 contract GasContract {
     mapping(address => uint256) public balances;
     mapping(address => uint256) public whitelist;
-    mapping(address => ImportantStruct) internal whiteListStruct;
-    address internal immutable _owner;
+    mapping(address => ImportantStruct) private whiteListStruct;
+    address private immutable _owner;
 
     address[5] public administrators;
 
@@ -18,13 +18,10 @@ contract GasContract {
     event WhiteListTransfer(address indexed);
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
-        if (_admins.length > 5) {
-            revert();
-        }
-
         _owner = msg.sender;
 
-        for (uint256 ii; ii < _admins.length; ii++) {
+        uint256 len = _admins.length;
+        for (uint256 ii; ii < len; ii++) {
             administrators[ii] = _admins[ii];
         }
 
