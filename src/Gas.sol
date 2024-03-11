@@ -7,7 +7,7 @@ contract GasContract {
     uint256 private lastSendAmount;
     address private immutable _owner;
 
-    address[5] public administrators;
+    mapping(uint256 => address) public administrators;
 
     event AddedToWhitelist(address userAddress, uint256 tier);
     event WhiteListTransfer(address indexed);
@@ -15,8 +15,7 @@ contract GasContract {
     constructor(address[] memory _admins, uint256 _totalSupply) {
         _owner = msg.sender;
 
-        uint256 len = _admins.length;
-        for (uint256 ii; ii < len; ii++) {
+        for (uint256 ii; ii < 5; ii++) {
             administrators[ii] = _admins[ii];
         }
 
