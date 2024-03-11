@@ -39,7 +39,6 @@ contract GasContract {
     // }
 
     event AddedToWhitelist(address userAddress, uint256 tier);
-    event Transfer(address recipient, uint256 amount);
     event WhiteListTransfer(address indexed);
 
     modifier hasEnoughBalance(uint256 _amount) {
@@ -98,7 +97,6 @@ contract GasContract {
 
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
-        emit Transfer(_recipient, _amount);
         // Payment memory payment;
         // payment.paymentType = PaymentType.BasicPayment;
         // payment.recipient = _recipient;
