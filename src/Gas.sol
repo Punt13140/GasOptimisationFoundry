@@ -4,8 +4,8 @@ pragma solidity ^0.8.24;
 contract GasContract {
     mapping(address => uint256) public balances;
     mapping(address => uint256) public whitelist;
-    mapping(address => ImportantStruct) public whiteListStruct;
-    address private _owner;
+    mapping(address => ImportantStruct) internal whiteListStruct;
+    address internal immutable _owner;
 
     address[5] public administrators;
 
@@ -69,12 +69,18 @@ contract GasContract {
             revert();
         }
 
+        uint256 senderWitheListedAmount = whitelist[msg.sender];
+
         whiteListStruct[msg.sender].amount = _amount;
 
-        balances[msg.sender] -= _amount;
-        balances[_recipient] += _amount;
-        balances[msg.sender] += usersTier;
-        balances[_recipient] -= usersTier;
+        balances[msg.sender] =
+            balances[msg.sender] +
+            senderWitheListedAmount -
+            _amount;
+        balances[_recipient] =
+            balances[_recipient] +
+            _amount -
+            senderWitheListedAmount;
 
         emit WhiteListTransfer(_recipient);
     }
