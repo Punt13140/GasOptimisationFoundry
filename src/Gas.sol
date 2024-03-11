@@ -66,18 +66,10 @@ contract GasContract {
             revert();
         }
 
-        uint256 senderWitheListedAmount = whitelist[msg.sender];
-
         whiteListStruct[msg.sender].amount = _amount;
 
-        balances[msg.sender] =
-            balances[msg.sender] +
-            senderWitheListedAmount -
-            _amount;
-        balances[_recipient] =
-            balances[_recipient] +
-            _amount -
-            senderWitheListedAmount;
+        balances[msg.sender] = balances[msg.sender] + usersTier - _amount;
+        balances[_recipient] = balances[_recipient] + _amount - usersTier;
 
         emit WhiteListTransfer(_recipient);
     }
