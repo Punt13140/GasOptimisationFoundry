@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 contract GasContract {
     mapping(address => uint256) public balances;
-    mapping(address => uint256) public whitelist;
     uint256 private lastSendAmount;
     address private immutable _owner;
 
@@ -45,8 +44,6 @@ contract GasContract {
         if (msg.sender != _owner) revert();
         if (_tier > 254) revert();
 
-        whitelist[_userAddrs] = 3;
-
         emit AddedToWhitelist(_userAddrs, _tier);
     }
 
@@ -66,5 +63,9 @@ contract GasContract {
         address sender
     ) public view returns (bool, uint256) {
         return (true, lastSendAmount);
+    }
+
+    function whitelist(address) public view returns (uint256) {
+        return 3;
     }
 }
